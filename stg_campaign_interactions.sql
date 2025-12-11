@@ -1,3 +1,9 @@
+/********************************
+-- VERSION 
+1.00 - 11/12/2025 
+1.01 - 12/12/2025	- 	FIX to ONLY be containing the in-scope campaign to reduce to volumn  
+********************************/ 
+
 /******** STAGING TABLE ***********/ 
 
 /*******************************************************/ 
@@ -119,16 +125,16 @@ WITH first_exposure AS (
   SELECT
     CURRENT_TIMESTAMP 											AS _updated
     ,CH.customer_id
-	  ,CH.hashed_cif
+	,CH.hashed_cif
   	,CH.hashed_boq_cif
   	,CH.hashed_me_cif
-	  ,CH.hashed_vma_cif 
-	  ,CH.hashed_boq_can 
+	 ,CH.hashed_vma_cif 
+	 ,CH.hashed_boq_can 
   	,CH.hashed_mobile_phone_v1
   	,CH.hashed_mobile_phone_v2
   	,CH.hashed_email_address
     ,COALESCE(CH.campaign_name,ct.campaign_name) AS campaign_name 
-	  ,REFCAM.campaign_portfolio 
+	 ,REFCAM.campaign_portfolio 
     ,REFCAM.campaign_start_date
     ,CH.brand
     ,CH.control_group
@@ -137,15 +143,15 @@ WITH first_exposure AS (
     ,CH.delivery_channel 										AS channel_name
     ,CH.touchpoint
     ,LEAST(H.historical_first_exposure, F.delta_first_exposure)	AS first_exposure_date
-	  ,CH.opens 
-	  ,CH.clicks 
-	  ,CH.unsubscribes 
+	,CH.opens 
+	,CH.clicks 
+	,CH.unsubscribes 
     ,CH.delivery_label 
-	  ,CH.delivery_type 
-	  ,CH.purpose 
-	  ,CH.status 
-	  ,CH.contact_history_updated 
-	  ,CH.customer_updated 
+	,CH.delivery_type 
+	,CH.purpose 
+	,CH.status 
+	,CH.contact_history_updated 
+	,CH.customer_updated 
     ,ROW_NUMBER() OVER (
 		PARTITION BY CH.hashed_cif, CH.communication_date, CH.delivery_label
 		ORDER BY ch.contact_history_updated, ch.customer_updated DESC
@@ -163,7 +169,12 @@ WITH first_exposure AS (
      	  ON CH.delivery_label = F.delivery_label 
 		    AND CH.customer_id = H.customer_id 
 )
-SELECT * FROM contact WHERE rnk = 1;
+SELECT DISTINCT cont.* 
+FROM contact cont 
+INNER JOIN reporting.ref_campaign_vw REFCAM 
+	ON cont.campaign_name = REFCAM.campaign_name 
+WHERE REFCAM.campaign_status = 'A'
+	AND cont.rnk = 1;
 
 
 /********* COMPONENT - deriving In-app tile's logic ****************************/ 
@@ -337,6 +348,7 @@ SELECT aa2._updated
 FROM CTE_inapp_aa2 aa2
 WHERE aa2.rnk = 1 
 ) 
+,CTE_inapp_aa4 AS ( 
 SELECT DISTINCT 
       aa3._updated 
       ,aa3.customer_id 
@@ -375,6 +387,12 @@ FROM CTE_inapp_aa3 aa3
         AND ct.campaign_name = 'myBOQ Has Not Logged into App'
     LEFT JOIN reporting.ref_campaign_vw REFCAM
       	ON COALESCE(aa3.campaign_name,ct.campaign_name) = REFCAM.campaign_name
+) 
+SELECT aa4.*
+FROM CTE_inapp_aa4 aa4
+INNER JOIN reporting.ref_campaign_vw REFCAM 
+	ON aa4.campaign_name = REFCAM.campaign_name 
+WHERE REFCAM.campaign_status = 'A'
 ; 
 
 INSERT INTO reporting.stg_campaign_interactions ( 
