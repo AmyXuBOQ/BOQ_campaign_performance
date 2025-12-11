@@ -1248,18 +1248,17 @@ FROM cte2
 )
 ,cte4 AS (
 SELECT *
--- To think thrugh IF the rt_convert_cust_c is 0 then whether put denominotr to be 1 
-		,CASE WHEN objective_is_positive IS TRUE THEN COALESCE ( CASE WHEN rt_convert_cust_c IS NULL OR rt_convert_cust_c = 0 THEN 1 ELSE Incremental_uplift::NUMERIC / NULLIF (rt_convert_cust_c,0) END::NUMERIC ,0) 
-				WHEN objective_is_positive IS FALSE THEN COALESCE ( CASE WHEN rt_convert_cust_i IS NULL OR rt_convert_cust_i = 0 THEN 1 ELSE Incremental_uplift::NUMERIC /  NULLIF (rt_convert_cust_i,0) END::NUMERIC ,0) 
-			ELSE 0 END AS RELATIVE_CONVERSION_RATE
-		,CASE WHEN objective_is_positive IS TRUE THEN Incremental_uplift::NUMERIC * cntd_cust_i::NUMERIC
-				WHEN objective_is_positive IS FALSE THEN  Incremental_uplift::NUMERIC * cntd_cust_i::NUMERIC
-			ELSE 0 END AS INCREMENTAL_UPLIFT_NUM
-		,CASE WHEN objective_is_positive IS TRUE THEN COALESCE (Incremental_uplift::NUMERIC * 365 * cntd_cust_i::NUMERIC/ NULLIF (cntd_cohort_i::NUMERIC, 0)::NUMERIC, 0)::NUMERIC
-				WHEN objective_is_positive IS FALSE THEN COALESCE ( (Incremental_uplift::NUMERIC * 365 * cntd_cust_i::NUMERIC / NULLIF (cntd_cohort_i::NUMERIC, 0), 0)::NUMERIC
-			ELSE 0 END AS ANNUALISED_UPLIFT_NUM		
+    ,CASE WHEN objective_is_positive IS TRUE THEN COALESCE(CASE WHEN rt_convert_cust_c IS NULL OR rt_convert_cust_c = 0 THEN 1 ELSE Incremental_uplift::NUMERIC / NULLIF(rt_convert_cust_c,0) END,0)
+          WHEN objective_is_positive IS FALSE THEN COALESCE(CASE WHEN rt_convert_cust_i IS NULL OR rt_convert_cust_i = 0 THEN 1 ELSE Incremental_uplift::NUMERIC / NULLIF(rt_convert_cust_i,0) END,0)
+          ELSE 0 END AS RELATIVE_CONVERSION_RATE
+    ,CASE WHEN objective_is_positive IS TRUE THEN Incremental_uplift::NUMERIC * cntd_cust_i::NUMERIC
+          WHEN objective_is_positive IS FALSE THEN Incremental_uplift::NUMERIC * cntd_cust_i::NUMERIC
+          ELSE 0 END AS INCREMENTAL_UPLIFT_NUM
+    ,CASE WHEN objective_is_positive IS TRUE THEN COALESCE((Incremental_uplift::NUMERIC * 365 * cntd_cust_i::NUMERIC) / NULLIF(cntd_cohort_i::NUMERIC,0),0)::NUMERIC
+          WHEN objective_is_positive IS FALSE THEN COALESCE((Incremental_uplift::NUMERIC * 365 * cntd_cust_i::NUMERIC) / NULLIF(cntd_cohort_i::NUMERIC,0),0)::NUMERIC
+          ELSE 0 END AS ANNUALISED_UPLIFT_NUM
 FROM cte3
-) 
+)
 SELECT CURRENT_TIMESTAMP AS _updated 
 		,fin1.NBR 
 		,fin1.grain 
