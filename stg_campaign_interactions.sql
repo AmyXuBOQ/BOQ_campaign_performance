@@ -90,6 +90,7 @@ WITH first_exposure AS (
   SELECT DISTINCT
     customer_id
     ,campaign_name
+	,delivery_label
 	,trim(
       array_to_string(
         (string_to_array(delivery_label, '-'))[
@@ -107,11 +108,12 @@ WITH first_exposure AS (
   SELECT
     customer_id
     ,campaign_name
+	,delivery_label
     ,touchpoint
     ,MIN(DATE(first_exposure_date)) AS historical_first_exposure
   FROM reporting.stg_campaign_interactions
   WHERE first_exposure_date IS NOT NULL 
-  GROUP BY 1,2,3
+  GROUP BY 1,2,3,4
 )
 , contact AS (
   SELECT
@@ -155,13 +157,11 @@ WITH first_exposure AS (
     LEFT JOIN reporting.ref_campaign_vw REFCAM
       	ON COALESCE(CH.campaign_name,ct.campaign_name) = REFCAM.campaign_name
     LEFT JOIN first_exposure F
-      	ON COALESCE(CH.campaign_name,ct.campaign_name) = F.campaign_name
+      	ON CH.delivery_label = F.delivery_label 
 		    AND CH.customer_id = F.customer_id 
-		    AND CH.touchpoint = F.touchpoint 
     LEFT JOIN historical_exposure H
-     	  ON COALESCE(CH.campaign_name,ct.campaign_name) = H.campaign_name
+     	  ON CH.delivery_label = F.delivery_label 
 		    AND CH.customer_id = H.customer_id 
-		    AND CH.touchpoint = H.touchpoint 
 )
 SELECT * FROM contact WHERE rnk = 1;
 
