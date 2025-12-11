@@ -670,7 +670,7 @@ CROSS JOIN (SELECT GENERATE_SERIES(
        )::DATE AS performance_measurement_date
 ) pmd 
 WHERE coi.communication_date <= pmd.performance_measurement_date 
-AND ref.campaign_start_date >= pmd.performance_measurement_date 
+AND ref.campaign_start_date <= pmd.performance_measurement_date 
 AND coi.communication_date <= CURRENT_DATE 
 AND ( coi.objective_rank != 'Unintended Outcome' OR coi.objective_rank IS NULL) 
 ;
