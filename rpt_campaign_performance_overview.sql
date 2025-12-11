@@ -93,7 +93,7 @@ SELECT DISTINCT
 		,cte.incremental_uplift 					
 		,cte.incremental_uplift_num 				
 		,cte.annualised_uplift_num 					
-		,cte.test_stats::NUMERIC			
+		,ROUND (cte.test_stats::NUMERIC, 3) 															AS test_stats			
 		,0::NUMERIC 																				 	AS mean 
 		,1::NUMERIC																						AS standard_dev 					
 FROM CTE2 cam 
