@@ -1256,7 +1256,7 @@ SELECT *
 				WHEN objective_is_positive IS FALSE THEN  Incremental_uplift::NUMERIC * cntd_cust_i::NUMERIC
 			ELSE 0 END AS INCREMENTAL_UPLIFT_NUM
 		,CASE WHEN objective_is_positive IS TRUE THEN COALESCE (Incremental_uplift::NUMERIC * 365 * cntd_cust_i::NUMERIC/ NULLIF (cntd_cohort_i::NUMERIC, 0)::NUMERIC, 0)::NUMERIC
-				WHEN objective_is_positive IS FALSE THEN COALESCE ( (Incremental_uplift::NUMERIC * 365 * cntd_cust_i::NUMERIC / NULLIF (cntd_cohort_i::NUMERIC, 0)::NUMERIC, 0))::NUMERIC
+				WHEN objective_is_positive IS FALSE THEN COALESCE ( (Incremental_uplift::NUMERIC * 365 * cntd_cust_i::NUMERIC / NULLIF (cntd_cohort_i::NUMERIC, 0)::NUMERIC, 0)::NUMERIC)
 			ELSE 0 END AS ANNUALISED_UPLIFT_NUM		
 FROM cte3
 ) 
