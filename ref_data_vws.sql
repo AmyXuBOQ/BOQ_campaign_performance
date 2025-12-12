@@ -28,19 +28,21 @@ SELECT 'VIEW CREATED' AS status;
 
 DROP VIEW IF EXISTS reporting.ref_objective_vw;
 
-CREATE VIEW reporting.ref_campaign_objective_vw AS
+CREATE VIEW reporting.ref_objective_vw AS
 SELECT
   _updated AS TIMESTAMP,
   _filename,
   CAST(id AS INT) AS id,
-  campaign_objective_id,
-  campaign_id,
   objective_id,
-  objective_rank,
-  capture_period::INTERVAL AS capture_period,
-  campaign_objective_status,
+  objective_name,
+  objective_desc,
+  objective_category,
+  objective_portfolio,
+  objective_is_positive,
+  default_capture_period::INTERVAL AS default_capture_period,
+  objective_status,
   TO_DATE(SUBSTRING(_filename FROM '[0-9]{8}'), 'YYYYMMDD') AS date_insertion
-FROM dw."CDP_ref_campaign_objective";
+FROM dw."CDP_ref_objective";
 SELECT 'VIEW CREATED' AS status;
 
 /**********************************************************************/
@@ -83,5 +85,6 @@ SELECT
   touchpoint_status,
   TO_DATE(SUBSTRING(_filename FROM '[0-9]{8}'), 'YYYYMMDD') AS date_insertion
 FROM dw."CDP_ref_campaign_touchpoint";
+
 
 SELECT 'VIEW CREATED' AS status;
