@@ -24,8 +24,8 @@ SELECT
 -- delete all records from last run
 DELETE FROM reporting.stg_campaign_interactions A 
 USING reporting.temp_variables_camp B 
-WHERE A._updated > B.last_run_max 
-AND A._updated <= B.today_run_max 
+WHERE A._updated::DATE > B.last_run_max::DATE 
+AND A._updated::DATE <= B.today_run_max::DATE 
 ;
 
 
@@ -133,7 +133,7 @@ WITH first_exposure AS (
   	,CH.hashed_mobile_phone_v1
   	,CH.hashed_mobile_phone_v2
   	,CH.hashed_email_address
-    ,COALESCE(CH.campaign_name,ct.campaign_name) AS campaign_name 
+    ,COALESCE(ct.campaign_name,ch.campaign_name) AS campaign_name 
 	 ,REFCAM.campaign_portfolio 
     ,REFCAM.campaign_start_date
     ,CH.brand
@@ -159,9 +159,8 @@ WITH first_exposure AS (
     FROM reporting.temp_ch_delta CH
     LEFT JOIN reporting.ref_campaign_touchpoint_vw ct 
         ON UPPER(TRIM(CH.touchpoint)) = UPPER(TRIM(ct.touchpoint)) 
-        AND ct.campaign_name = 'myBOQ Has Not Logged into App'
     LEFT JOIN reporting.ref_campaign_vw REFCAM
-      	ON COALESCE(CH.campaign_name,ct.campaign_name) = REFCAM.campaign_name
+      	ON COALESCE(ct.campaign_name,ch.campaign_name) = REFCAM.campaign_name
     LEFT JOIN first_exposure F
       	ON CH.delivery_label = F.delivery_label 
 		    AND CH.customer_id = F.customer_id 
@@ -208,8 +207,8 @@ WITH CTE_inapp_aa AS (
     ,(string_to_array(_filename, '_'))[4]                           AS brand 
     ,array_to_string ((string_to_array(_filename, '_'))[1:4], '_')  AS source 
     FROM dw."CDP_OBJ_InApp_BOQ_v1"
-    WHERE _updated::DATE > (SELECT MAX(last_run_max) FROM reporting.temp_variables_inapp WHERE UPPER(table_name) LIKE '%BOQ%')
-    AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_inapp WHERE UPPER(table_name) LIKE '%BOQ%')
+    WHERE _updated::DATE > (SELECT MAX(last_run_max) FROM reporting.temp_variables_inapp WHERE UPPER(table_name) LIKE '%BOQ%')::DATE
+    AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_inapp WHERE UPPER(table_name) LIKE '%BOQ%')::DATE
     AND hashed_mobile_1_id_evar100 IS NOT NULL 
 
   UNION ALL
@@ -223,8 +222,8 @@ WITH CTE_inapp_aa AS (
     ,(string_to_array(_filename, '_'))[4]                           AS brand 
     ,array_to_string ((string_to_array(_filename, '_'))[1:4], '_')  AS source
     FROM dw."CDP_OBJ_InApp_MEB_v3"
-    WHERE _updated::DATE > (SELECT MAX(last_run_max) FROM reporting.temp_variables_inapp WHERE UPPER(table_name) LIKE '%ME%')
-    AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_inapp WHERE UPPER(table_name) LIKE '%ME%')
+    WHERE _updated::DATE > (SELECT MAX(last_run_max) FROM reporting.temp_variables_inapp WHERE UPPER(table_name) LIKE '%ME%')::DATE
+    AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_inapp WHERE UPPER(table_name) LIKE '%ME%')::DATE
     AND hashed_mobile_1_id_evar100 IS NOT NULL 
 ) 
 
@@ -321,9 +320,9 @@ SELECT aa2._updated
             COALESCE(aa2.hashed_cif, ''), '-',
             COALESCE(aa2.delivery_label, ''), '-',
             COALESCE(aa2.campaign_name, '')
-          ) 																                        AS communication_id
+          ) 															AS communication_id
       ,TO_TIMESTAMP(aa2.delivery_time, 'YYYY-MM-DD HH24:MI:SS') 		AS communication_date
-      ,aa2.delivery_channel                                         AS channel_name 
+      ,aa2.delivery_channel                                         	AS channel_name 
       ,trim(
           array_to_string(
             (string_to_array(aa2.delivery_label, '-'))[
@@ -332,7 +331,7 @@ SELECT aa2._updated
             ],
             '-'
           )
-        ) 		               AS touchpoint
+        ) 		             AS touchpoint
       ,aa2.exposure_date     AS first_exposure_date 
       ,0                     AS opens
       ,1                     AS clicks 
@@ -360,7 +359,7 @@ SELECT DISTINCT
       ,aa3.hashed_mobile_phone_v1 
       ,aa3.hashed_mobile_phone_v2 
       ,aa3.hashed_email_address 
-      ,COALESCE(aa3.campaign_name, ct.campaign_name) AS campaign_name  
+      ,COALESCE(ct.campaign_name, aa3.campaign_name) AS campaign_name  
       ,REFCAM.campaign_portfolio 
       ,REFCAM.campaign_start_date 
       ,aa3.brand 
@@ -384,9 +383,8 @@ SELECT DISTINCT
 FROM CTE_inapp_aa3 aa3
     LEFT JOIN reporting.ref_campaign_touchpoint_vw ct 
         ON UPPER(TRIM(aa3.touchpoint)) = UPPER(TRIM(ct.touchpoint)) 
-        AND ct.campaign_name = 'myBOQ Has Not Logged into App'
     LEFT JOIN reporting.ref_campaign_vw REFCAM
-      	ON COALESCE(aa3.campaign_name,ct.campaign_name) = REFCAM.campaign_name
+      	ON COALESCE(ct.campaign_name,aa3.campaign_name) = REFCAM.campaign_name
 ) 
 SELECT aa4.*
 FROM CTE_inapp_aa4 aa4
