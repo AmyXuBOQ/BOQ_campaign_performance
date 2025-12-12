@@ -13,8 +13,8 @@ SELECT campaign_id
 		, channel
 		, action
 		, touchpoint
-		, agg.cntd_comm			 	AS communication_sent_num
-		, agg.cntd_cust			 	AS cust_communication_sent_num 
+		, agg.cntd_comm_i		 	AS communication_sent_num
+		, agg.cntd_cust_i		 	AS cust_communication_sent_num 
 		, agg.cntd_comm_contact		AS communication_contacted_num 
 		, agg.cntd_cust_contact		AS cust_contacted_num 
 FROM reporting.rpt_campaign_objective_interactions  agg 
