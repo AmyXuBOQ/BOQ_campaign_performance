@@ -46,8 +46,8 @@ CROSS JOIN (
 DELETE FROM reporting.stg_objective_interactions A 
 USING reporting.temp_variables_obj b 
 WHERE A.source = b.table_name 
-AND  A._updated > b.last_run_max  
-AND A._updated <= b.today_run_max ;
+AND  A._updated::DATE > b.last_run_max::DATE  
+AND A._updated::DATE <= b.today_run_max::DATE ;
 
 
 /************ STEP 1 - CREATING OBJECTIVE FILES STACKED FROM DIFFERENT SOURCES ****************/ 
@@ -62,8 +62,8 @@ WITH CTE_obj_aa AS (
     ,hashed_cif_evar103 
     ,_filename 
  FROM dw."CDP_OBJ_BOQ_v1"
-  WHERE _updated::DATE > (SELECT last_run_max FROM reporting.temp_variables_obj WHERE table_name = 'AA')
-  AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_obj WHERE table_name = 'AA')
+  WHERE _updated::DATE > (SELECT last_run_max FROM reporting.temp_variables_obj WHERE table_name = 'AA')::DATE
+  AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_obj WHERE table_name = 'AA')::DATE
 
   UNION ALL
 
@@ -75,8 +75,8 @@ WITH CTE_obj_aa AS (
     ,hashed_cif_evar103 
     ,_filename 
    FROM dw."CDP_OBJ_MEB_v1"
-  WHERE _updated::DATE > (SELECT last_run_max FROM reporting.temp_variables_obj WHERE table_name = 'AA')
-  AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_obj WHERE table_name = 'AA')
+  WHERE _updated::DATE > (SELECT last_run_max FROM reporting.temp_variables_obj WHERE table_name = 'AA')::DATE
+  AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_obj WHERE table_name = 'AA')::DATE
 )
 ,CTE_obj_aa1 AS ( 
 SELECT 
@@ -149,8 +149,8 @@ CREATE TABLE IF NOT EXISTS reporting.temp_acs_objectives AS
     ,customer_id 
     ,_updated                   AS objective_met_date 
   FROM reporting.stg_campaign_interactions
-  WHERE _updated::DATE > (SELECT last_run_max FROM reporting.temp_variables_obj WHERE table_name = 'ACS')
-    AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_obj)
+  WHERE _updated::DATE > (SELECT last_run_max FROM reporting.temp_variables_obj WHERE table_name = 'ACS')::DATE
+    AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_obj)::DATE
     AND unsubscribes > 0 
 ;
 
@@ -197,8 +197,8 @@ CREATE TABLE IF NOT EXISTS reporting.temp_t24_objectives AS
       ELSE NULL
     END AS objective_met_date
   FROM dw."CDP_OBJ_IDP_BOQ"
-  WHERE   _updated::DATE > (SELECT last_run_max FROM reporting.temp_variables_obj WHERE table_name = 'T24')
-    AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_obj)
+  WHERE   _updated::DATE > (SELECT last_run_max FROM reporting.temp_variables_obj WHERE table_name = 'T24')::DATE
+    AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_obj)::DATE
     AND customer_id IS NOT NULL
     AND objective_id IS NOT NULL
     AND objective_met_date IS NOT NULL
