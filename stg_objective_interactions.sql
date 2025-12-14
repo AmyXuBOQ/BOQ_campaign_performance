@@ -46,7 +46,7 @@ CROSS JOIN (
 DELETE FROM reporting.stg_objective_interactions A 
 USING reporting.temp_variables_obj b 
 WHERE A.source = b.table_name 
-AND  A._updated::DATE > b.last_run_max::DATE  
+AND  A._updated::DATE > b.last_run_max::DATE + Interval '1 day'   
 AND A._updated::DATE <= b.today_run_max::DATE ;
 
 
