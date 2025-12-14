@@ -784,7 +784,7 @@ SELECT 'campaign-portfolio-objective-performance_measurement_date' AS grain
 		, COALESCE  (cte6.cntd_comm, 0)			AS cntd_comm_convert_after_contact 
 FROM ( SELECT DISTINCT dd.performance_measurement_date 
         ,dd.campaign_id 
-        ,dd.objective_id 
+        ,obj.objective_id 
 		,cam.campaign_portfolio 
 		,obj.objective_name 
 		,cam_obj.objective_rank 
@@ -793,11 +793,15 @@ FROM ( SELECT DISTINCT dd.performance_measurement_date
         INNER JOIN reporting.ref_campaign_vw cam 
 			ON dd.campaign_id  = cam.campaign_id 
 		INNER JOIN reporting.ref_campaign_objective_vw  cam_obj 
-			ON dd.campaign_id = cam_obj.campaign_id 
-			AND dd.objective_id = cam_obj.objective_id 
+			ON cam.campaign_id = cam_obj.campaign_id 
 		INNER JOIN reporting.ref_objective_vw obj 
 			ON cam_obj.objective_id = obj.objective_id 
-			AND dd.objective_id = obj.objective_id 
+		INNER JOIN ( SELECT DISTINCT campaign_id, objective_id
+						FROM reporting.temp_rpt_agg_4dd
+						WHERE objective_id IS NOT NULL 
+					) dd1 
+			ON dd.campaign_id = dd1.campaign_id 
+			AND dd.objective_id = dd1.objective_id 
         ) MASTER		
 LEFT JOIN CTE1 
 	ON COALESCE(master.campaign_id, '')	    = COALESCE(cte1.campaign_id, '') 	 
@@ -943,11 +947,15 @@ FROM ( SELECT DISTINCT cc.performance_measurement_date
         INNER JOIN reporting.ref_campaign_vw cam 
 			ON cc.campaign_id  = cam.campaign_id 
 		INNER JOIN reporting.ref_campaign_objective_vw  cam_obj 
-			ON cc.campaign_id = cam_obj.campaign_id 
-			AND cc.objective_id = cam_obj.objective_id 
+			ON cam.campaign_id = cam_obj.campaign_id 
 		INNER JOIN reporting.ref_objective_vw obj 
 			ON cam_obj.objective_id = obj.objective_id 
-			AND cc.objective_id = obj.objective_id  
+		INNER JOIN ( SELECT DISTINCT campaign_id, objective_id
+						FROM reporting.temp_rpt_agg_5cc
+						WHERE objective_id IS NOT NULL 
+					) cc1
+			ON cc.campaign_id = cc1.campaign_id 
+			AND cc.objective_id = cc1.objective_id 
         ) MASTER		
 LEFT JOIN CTE1 
 	ON COALESCE(master.campaign_id, '')	    = COALESCE(cte1.campaign_id, '') 	 
