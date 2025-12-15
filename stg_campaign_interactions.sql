@@ -24,7 +24,7 @@ SELECT
 -- delete all records from last run
 DELETE FROM reporting.stg_campaign_interactions A 
 USING reporting.temp_variables_camp B 
-WHERE A._updated::DATE > B.last_run_max::DATE + Interval '1 day'
+WHERE A._updated::DATE >= B.last_run_max::DATE + Interval '1 day'
 AND A._updated::DATE <= B.today_run_max::DATE 
 ;
 
