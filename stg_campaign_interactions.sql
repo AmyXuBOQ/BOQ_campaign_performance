@@ -2,6 +2,7 @@
 -- VERSION 
 1.00 - 11/12/2025 
 1.01 - 12/12/2025	- 	FIX to ONLY be containing the in-scope campaign to reduce to volumn  
+1.02 - 15/12/2025   -   Delete record adding + interval 1 day because seems CDP set up current date to be utc but timestamp as local
 ********************************/ 
 
 /******** STAGING TABLE ***********/ 
@@ -24,7 +25,7 @@ SELECT
 -- delete all records from last run
 DELETE FROM reporting.stg_campaign_interactions A 
 USING reporting.temp_variables_camp B 
-WHERE A._updated::DATE > B.last_run_max::DATE 
+WHERE A._updated::DATE > B.last_run_max::DATE + Interval '1 day' 
 AND A._updated::DATE <= B.today_run_max::DATE 
 ;
 
