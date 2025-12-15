@@ -1,4 +1,3 @@
-
 /*******************************************************/ 
 /*** reporting.stg_objective_interactions *************/ 
 /*****************************************************/ 
@@ -45,9 +44,7 @@ CROSS JOIN (
 -- delete all records from today
 DELETE FROM reporting.stg_objective_interactions A 
 USING reporting.temp_variables_obj b 
-WHERE A.source = b.table_name 
-AND  A._updated::DATE > b.last_run_max::DATE + Interval '1 day'   
-AND A._updated::DATE <= b.today_run_max::DATE ;
+WHERE A.source = b.table_name AND  A._updated::DATE = B.today_run_max::DATE  ;
 
 
 /************ STEP 1 - CREATING OBJECTIVE FILES STACKED FROM DIFFERENT SOURCES ****************/ 
@@ -345,3 +342,4 @@ DROP TABLE IF EXISTS reporting.temp_acs_objectives;
 DROP TABLE IF EXISTS reporting.temp_t24_objectives;
 DROP TABLE IF EXISTS reporting.temp_objectives;
 DROP TABLE IF EXISTS reporting.temp_objective_interactions;
+
