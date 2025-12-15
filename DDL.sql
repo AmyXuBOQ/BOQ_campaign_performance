@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS reporting.log_campaign_performance (
     ,rows_inserted             INTEGER
     ,distinct_customers        INTEGER
     ,distinct_communications   INTEGER 
-    ,deleted                   INTEGER)
+)
 ;
 
 /******** STAGING TABLE ***********/ 
