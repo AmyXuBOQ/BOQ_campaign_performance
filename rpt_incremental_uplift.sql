@@ -5,6 +5,7 @@
 
 DROP TABLE IF EXISTS reporting.temp_rpt_incremental_uplift; 
 CREATE TABLE reporting.temp_rpt_incremental_uplift AS 
+WITH CTE AS ( 
 SELECT CURRENT_TIMESTAMP		        AS _updated
         ,coi.performance_measurement_date	
         ,CAST ('Daily' AS VARCHAR) 		AS cal_type	
@@ -18,10 +19,10 @@ SELECT CURRENT_TIMESTAMP		        AS _updated
 		,coi.type_objective 
         ,coi.incremental_uplift 
         ,coi.incremental_uplift                                                                 AS incremental_uplift_complete_total 
-        ,CASE WHEN coi.nbr = '4d'   THEN coi.incremental_uplift ELSE NULL END                   AS incremental_uplift_total 
+        ,CASE WHEN coi.nbr = '4d' AND coi.performance_measurement_date::DATE >= (CURRENT_DATE - cam_obj.capture_period)  THEN coi.incremental_uplift ELSE NULL END   AS incremental_uplift_total 
         ,CASE WHEN coi.performance_measurement_date::DATE = (CURRENT_DATE - cam_obj.capture_period)::DATE 
                     THEN coi.performance_measurement_date 
-                ELSE NULL END::DATE                                                             AS date_total     
+                ELSE NULL END::DATE                                                             AS date_total   
         ,coi.relative_conversion_rate 
 	    ,coi.relative_conversion_rate_indicator    
         ,coi.incremental_uplift_num				
@@ -29,14 +30,18 @@ SELECT CURRENT_TIMESTAMP		        AS _updated
         ,ROW_NUMBER() OVER (PARTITION BY coi.performance_measurement_date, coi.campaign_id, coi.objective_name, coi.objective_rank 
                                 ORDER BY CASE WHEN coi.nbr = '5c' THEN 1 
                                                 WHEN coi.nbr = '4d' THEN 2 
-                                                ELSE 99 END ASC) AS RNK                                              
+                                                ELSE 99 END ASC
+									,coi.incremental_uplift DESC) AS RNK                                              
 FROM reporting.rpt_campaign_objective_interactions coi
 INNER JOIN reporting.ref_campaign_vw cam 
     ON coi.campaign_id = cam.campaign_id 
 INNER JOIN reporting.ref_campaign_objective_vw cam_obj 
     ON coi.campaign_id = cam_obj.campaign_id 
     AND coi.objective_id = cam_obj.objective_id 
-WHERE coi.nbr IN ( '5c','4d') 
+WHERE  ( coi.nbr = '4d' AND coi.performance_measurement_date::DATE >= (CURRENT_DATE - cam_obj.capture_period))
+ OR ( coi.nbr = '5c' AND UPPER(coi.cohort) = 'COMPLETE COHORT'  AND coi.performance_measurement_date::DATE < (CURRENT_DATE - cam_obj.capture_period))
+	)
+SELECT * FROM CTE WHERE RNK = 1
 ;
 
 TRUNCATE TABLE reporting.rpt_incremental_uplift; 
