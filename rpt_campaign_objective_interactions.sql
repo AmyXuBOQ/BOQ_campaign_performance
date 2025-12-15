@@ -688,7 +688,7 @@ SELECT DISTINCT pmd.performance_measurement_date
         ,pmd.first_exposure_date 
         ,pmd.objective_conv_after_contact 
 FROM reporting.temp_rpt_agg_5cc pmd
-WHERE coi.communication_date <= CURRENT_DATE 
+WHERE pmd.communication_date <= CURRENT_DATE 
 ; 
 
 DROP TABLE IF EXISTS reporting.temp_rpt_agg_4d; 
