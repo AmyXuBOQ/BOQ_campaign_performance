@@ -1,7 +1,7 @@
 /********************************
 -- VERSION 
 1.00 - 11/12/2025 
-1.01 - 12/12/2025	- 	FIX to ONLY be containing the in-scope campaign to reduce to volumn  
+1.01 - 12/12/2025	- 	FIX to ONLY be containing the in-scope campaign to reduce to volumn   
 ********************************/ 
 
 /******** STAGING TABLE ***********/ 
