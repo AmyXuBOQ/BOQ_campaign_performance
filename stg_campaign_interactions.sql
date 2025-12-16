@@ -1,7 +1,7 @@
 /********************************
 -- VERSION 
 1.00 - 11/12/2025 
-1.01 - 12/12/2025	- 	FIX to ONLY be containing the in-scope campaign to reduce to volumn  
+1.01 - 12/12/2025	- 	FIX to ONLY be containing the in-scope campaign to reduce to volumn   
 ********************************/ 
 
 /******** STAGING TABLE ***********/ 
@@ -27,7 +27,7 @@ USING reporting.temp_variables_camp B
 WHERE A._updated::DATE = B.today_run_max::DATE 
 ;
 
-
+/********* COMPONENT I - deriving EDM Channel logic ****************************/ 
 DROP TABLE IF EXISTS reporting.temp_ch_delta;
 CREATE TABLE IF NOT EXISTS reporting.temp_ch_delta AS
 WITH CTE_ch_delta AS ( 
@@ -91,44 +91,15 @@ SELECT * FROM CTE_ch_delta WHERE RNK = 1
 
 DROP TABLE IF EXISTS reporting.temp_contact;
 CREATE TABLE IF NOT EXISTS reporting.temp_contact AS
-WITH first_exposure AS (
-  SELECT DISTINCT
-    customer_id
-    ,campaign_name
-	,delivery_label
-	,trim(
-      array_to_string(
-        (string_to_array(delivery_label, '-'))[
-          5 :
-          array_length(string_to_array(delivery_label, '-'), 1)
-        ],
-        '-'
-      )
-    ) 		                                                            AS touchpoint
-    ,MIN(contact_history_updated) OVER (PARTITION BY hashed_cif, campaign_name, touchpoint)::DATE AS delta_first_exposure
-  FROM reporting.temp_ch_delta
-  WHERE UPPER(status) = 'FAILED'
-)
-, historical_exposure AS (
-  SELECT
-    customer_id
-    ,campaign_name
-	,delivery_label
-    ,touchpoint
-    ,MIN(DATE(first_exposure_date)) AS historical_first_exposure
-  FROM reporting.stg_campaign_interactions
-  WHERE first_exposure_date IS NOT NULL 
-  GROUP BY 1,2,3,4
-)
-, contact AS (
+WITH contact AS (
   SELECT
     CURRENT_TIMESTAMP 											AS _updated
     ,CH.customer_id
 	,CH.hashed_cif
   	,CH.hashed_boq_cif
   	,CH.hashed_me_cif
-	 ,CH.hashed_vma_cif 
-	 ,CH.hashed_boq_can 
+	,CH.hashed_vma_cif 
+	,CH.hashed_boq_can 
   	,CH.hashed_mobile_phone_v1
   	,CH.hashed_mobile_phone_v2
   	,CH.hashed_email_address
@@ -139,9 +110,9 @@ WITH first_exposure AS (
     ,CH.control_group
     ,CH.communication_id
     ,CH.communication_date
-    ,CH.delivery_channel 										AS channel_name
+    ,CH.delivery_channel 															AS channel_name
     ,CH.touchpoint
-    ,LEAST(H.historical_first_exposure, F.delta_first_exposure)	AS first_exposure_date
+    ,CASE WHEN UPPER(status) = 'FAILED' THEN NULL ELSE CH.communication_date END 	AS first_exposure_date
 	,CH.opens 
 	,CH.clicks 
 	,CH.unsubscribes 
@@ -159,13 +130,7 @@ WITH first_exposure AS (
     LEFT JOIN reporting.ref_campaign_touchpoint_vw ct 
         ON UPPER(TRIM(CH.touchpoint)) = UPPER(TRIM(ct.touchpoint)) 
     LEFT JOIN reporting.ref_campaign_vw REFCAM
-      	ON COALESCE(ct.campaign_name,ch.campaign_name) = REFCAM.campaign_name
-    LEFT JOIN first_exposure F
-      	ON CH.delivery_label = F.delivery_label 
-		    AND CH.customer_id = F.customer_id 
-    LEFT JOIN historical_exposure H
-     	  ON CH.delivery_label = F.delivery_label 
-		    AND CH.customer_id = H.customer_id 
+      	ON COALESCE(ct.campaign_name,ch.campaign_name) = REFCAM.campaign_name 
 )
 SELECT DISTINCT cont.* 
 FROM contact cont 
@@ -175,7 +140,7 @@ WHERE REFCAM.campaign_status = 'A'
 	AND cont.rnk = 1;
 
 
-/********* COMPONENT - deriving In-app tile's logic ****************************/ 
+/********* COMPONENT II - deriving In-app tile's logic ****************************/ 
 DROP TABLE IF EXISTS reporting.temp_variables_inapp; 
 CREATE TABLE IF NOT EXISTS reporting.temp_variables_inapp AS 
 SELECT DISTINCT master.table_name 
