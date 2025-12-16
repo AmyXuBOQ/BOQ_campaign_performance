@@ -297,7 +297,7 @@ SELECT aa2._updated
             '-'
           )
         ) 		             AS touchpoint
-      ,CASE WHEN aa.control_group = 0 THEN aa2.exposure_date ELSE NULL END     AS first_exposure_date 
+      ,CASE WHEN aa.control_group = '0' THEN aa2.exposure_date ELSE NULL END     AS first_exposure_date 
       ,0                     AS opens
       ,0                     AS clicks 
       ,0                     AS unsubscribes  
