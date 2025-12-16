@@ -129,6 +129,7 @@ WITH contact AS (
     FROM reporting.temp_ch_delta CH
     LEFT JOIN reporting.ref_campaign_touchpoint_vw ct 
         ON UPPER(TRIM(CH.touchpoint)) = UPPER(TRIM(ct.touchpoint)) 
+		AND UPPER(TRIM(CH.delivery_channel))  = UPPER(TRIM(ct.channel)) 
     LEFT JOIN reporting.ref_campaign_vw REFCAM
       	ON COALESCE(ct.campaign_name,ch.campaign_name) = REFCAM.campaign_name 
 )
@@ -347,6 +348,7 @@ SELECT DISTINCT
 FROM CTE_inapp_aa3 aa3
     LEFT JOIN reporting.ref_campaign_touchpoint_vw ct 
         ON UPPER(TRIM(aa3.touchpoint)) = UPPER(TRIM(ct.touchpoint)) 
+		AND UPPER(TRIM(aa3.channel_name)) = UPPER(TRIM(ct.channel))
     LEFT JOIN reporting.ref_campaign_vw REFCAM
       	ON COALESCE(ct.campaign_name,aa3.campaign_name) = REFCAM.campaign_name
 ) 
