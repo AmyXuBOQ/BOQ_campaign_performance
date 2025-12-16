@@ -112,7 +112,7 @@ WITH contact AS (
     ,CH.communication_date
     ,CH.delivery_channel 															AS channel_name
     ,CH.touchpoint
-    ,CASE WHEN UPPER(CH.status) = 'SENT' AND CH.control_group = 0 THEN CH.communication_date ELSE NULL END 	AS first_exposure_date
+    ,CASE WHEN UPPER(CH.status) = 'SENT' AND CH.control_group = '0' THEN CH.communication_date ELSE NULL END 	AS first_exposure_date
 	,CH.opens 
 	,CH.clicks 
 	,CH.unsubscribes 
