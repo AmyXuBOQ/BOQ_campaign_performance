@@ -456,7 +456,7 @@ FROM ( SELECT DISTINCT agg.campaign_id
 					, agg.campaign_portfolio
 					, agg.objective_id
 					, obj.objective_name 
-					, COALESCE(agg.objective_rank, 'Unintend Outcome') AS objective_rank  
+					, COALESCE(agg.objective_rank, 'Unintended Outcome') AS objective_rank  
 					, agg.objective_is_positive
                     , agg.cohort
 		FROM reporting.stg_campaign_objective_interactions agg 
