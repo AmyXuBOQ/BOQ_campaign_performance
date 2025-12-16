@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS reporting.temp_t24_objectives AS
     ,TRIM(REPLACE(objective_id, ' ', ''))::VARCHAR  AS objective_id  
     ,customer_id
     ,CASE
-	  WHEN objective_met_date ~ '[A-Za-z]' THEN NULL
+	  WHEN objective_met_date::text ~ '[A-Za-z]' THEN NULL
 	  ELSE objective_met_date::TIMESTAMP
 	END AS objective_met_date
   FROM dw."CDP_OBJ_IDP_BOQ"
