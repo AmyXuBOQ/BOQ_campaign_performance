@@ -107,7 +107,7 @@ WITH first_exposure AS (
     ) 		                                                            AS touchpoint
     ,MIN(contact_history_updated) OVER (PARTITION BY hashed_cif, campaign_name, touchpoint)::DATE AS delta_first_exposure
   FROM reporting.temp_ch_delta
-  WHERE opens > 0 OR clicks > 0 OR unsubscribes > 0
+  WHERE UPPER(status) = 'FAILED'
 )
 , historical_exposure AS (
   SELECT
@@ -133,7 +133,7 @@ WITH first_exposure AS (
   	,CH.hashed_mobile_phone_v2
   	,CH.hashed_email_address
     ,COALESCE(ct.campaign_name,ch.campaign_name) AS campaign_name 
-	 ,REFCAM.campaign_portfolio 
+	,REFCAM.campaign_portfolio 
     ,REFCAM.campaign_start_date
     ,CH.brand
     ,CH.control_group
@@ -333,7 +333,7 @@ SELECT aa2._updated
         ) 		             AS touchpoint
       ,aa2.exposure_date     AS first_exposure_date 
       ,0                     AS opens
-      ,1                     AS clicks 
+      ,0                     AS clicks 
       ,0                     AS unsubscribes  
       ,aa2.delivery_label 
       ,aa2.delivery_type 
