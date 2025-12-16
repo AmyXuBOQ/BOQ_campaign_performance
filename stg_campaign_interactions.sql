@@ -98,21 +98,21 @@ WITH contact AS (
 	,CH.hashed_cif
   	,CH.hashed_boq_cif
   	,CH.hashed_me_cif
-	 ,CH.hashed_vma_cif 
-	 ,CH.hashed_boq_can 
+	,CH.hashed_vma_cif 
+	,CH.hashed_boq_can 
   	,CH.hashed_mobile_phone_v1
   	,CH.hashed_mobile_phone_v2
   	,CH.hashed_email_address
     ,COALESCE(ct.campaign_name,ch.campaign_name) AS campaign_name 
-	 ,REFCAM.campaign_portfolio 
+	,REFCAM.campaign_portfolio 
     ,REFCAM.campaign_start_date
     ,CH.brand
     ,CH.control_group
     ,CH.communication_id
     ,CH.communication_date
-    ,CH.delivery_channel 										AS channel_name
+    ,CH.delivery_channel 															AS channel_name
     ,CH.touchpoint
-    ,CH.communication_date										AS first_exposure_date
+    ,CASE WHEN UPPER(status) = 'FAILED' THEN NULL ELSE CH.communication_date END 	AS first_exposure_date
 	,CH.opens 
 	,CH.clicks 
 	,CH.unsubscribes 
