@@ -781,26 +781,26 @@ SELECT 'campaign-portfolio-objective-performance_measurement_date' AS grain
 		, COALESCE  (cte5.cntd_comm, 0)			AS cntd_comm_convert 
 		, COALESCE  (cte6.cntd_cust, 0)			AS cntd_cust_convert_after_contact 
 		, COALESCE  (cte6.cntd_comm, 0)			AS cntd_comm_convert_after_contact 
-FROM ( SELECT DISTINCT dd.performance_measurement_date 
-        ,dd.campaign_id 
+FROM ( SELECT DISTINCT pmd.performance_measurement_date 
+        ,cam.campaign_id 
         ,obj.objective_id 
-		,cam.campaign_portfolio 
-		,obj.objective_name 
-		,cam_obj.objective_rank 
-		,obj.objective_is_positive
-		FROM reporting.temp_rpt_agg_4dd dd 
-        INNER JOIN reporting.ref_campaign_vw cam 
-			ON dd.campaign_id  = cam.campaign_id 
+		    ,cam.campaign_portfolio 
+		    ,obj.objective_name 
+		    ,cam_obj.objective_rank 
+		    ,obj.objective_is_positive
+		FROM reporting.ref_campaign_vw cam 
 		INNER JOIN reporting.ref_campaign_objective_vw  cam_obj 
 			ON cam.campaign_id = cam_obj.campaign_id 
 		INNER JOIN reporting.ref_objective_vw obj 
 			ON cam_obj.objective_id = obj.objective_id 
-		INNER JOIN ( SELECT DISTINCT campaign_id, objective_id
-						FROM reporting.temp_rpt_agg_4dd
-						WHERE objective_id IS NOT NULL 
-					) dd1 
-			ON dd.campaign_id = dd1.campaign_id 
-			AND dd.objective_id = dd1.objective_id 
+    CROSS JOIN (SELECT GENERATE_SERIES(
+           CURRENT_DATE - INTERVAL '1 year',  
+           CURRENT_DATE,                      
+           INTERVAL '1 day'                   
+          )::DATE AS performance_measurement_date
+        ) pmd
+    WHERE cam.campaign_start_date <= pmd.performance_measurement_date 
+        AND cam.campaign_status = 'A'
         ) MASTER		
 LEFT JOIN CTE1 
 	ON COALESCE(master.campaign_id, '')	    = COALESCE(cte1.campaign_id, '') 	 
@@ -934,27 +934,30 @@ SELECT 'campaign-portfolio-objective-cohort-performancem_measurement_date' AS gr
 		, COALESCE  (cte5.cntd_comm, 0)			AS cntd_comm_convert 
 		, COALESCE  (cte6.cntd_cust, 0)			AS cntd_cust_convert_after_contact 
 		, COALESCE  (cte6.cntd_comm, 0)			AS cntd_comm_convert_after_contact 
-FROM ( SELECT DISTINCT cc.performance_measurement_date 
+FROM ( SELECT DISTINCT pmd.performance_measurement_date 
         ,cc.campaign_id 
         ,obj.objective_id 
-        ,cc.cohort 
+        ,cohort.cohort 
 		,cam.campaign_portfolio 
 		,obj.objective_name 
 		,cam_obj.objective_rank 
 		,obj.objective_is_positive
-		FROM reporting.temp_rpt_agg_5cc cc
-        INNER JOIN reporting.ref_campaign_vw cam 
-			ON cc.campaign_id  = cam.campaign_id 
+	FROM reporting.ref_campaign_vw cam 
 		INNER JOIN reporting.ref_campaign_objective_vw  cam_obj 
 			ON cam.campaign_id = cam_obj.campaign_id 
 		INNER JOIN reporting.ref_objective_vw obj 
 			ON cam_obj.objective_id = obj.objective_id 
-		INNER JOIN ( SELECT DISTINCT campaign_id, objective_id
-						FROM reporting.temp_rpt_agg_5cc
-						WHERE objective_id IS NOT NULL 
-					) cc1
-			ON cc.campaign_id = cc1.campaign_id 
-			AND cc.objective_id = cc1.objective_id 
+    	CROSS JOIN (SELECT GENERATE_SERIES(
+           CURRENT_DATE - INTERVAL '1 year',  
+           CURRENT_DATE,                      
+           INTERVAL '1 day'                   
+          		)::DATE AS performance_measurement_date
+        	) pmd
+    	CROSS JOIN ( SELECT 'Incomplete Cohort' AS cohort 
+                UNION ALL SELECT 'Complete Cohort' 
+            ) cohort 
+    WHERE cam.campaign_start_date <= pmd.performance_measurement_date 
+        AND cam.campaign_status = 'A'
         ) MASTER		
 LEFT JOIN CTE1 
 	ON COALESCE(master.campaign_id, '')	    = COALESCE(cte1.campaign_id, '') 	 
