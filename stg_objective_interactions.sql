@@ -192,6 +192,7 @@ CREATE TABLE IF NOT EXISTS reporting.temp_t24_objectives AS
 	  WHEN objective_met_date ~ '[A-Za-z]' THEN NULL
 	  ELSE objective_met_date::TIMESTAMP
 	END AS objective_met_date
+  FROM dw."CDP_OBJ_IDP_BOQ"
   WHERE   _updated::DATE > (SELECT last_run_max FROM reporting.temp_variables_obj WHERE table_name = 'T24')::DATE
     AND _updated::DATE <= (SELECT DISTINCT today_run_max FROM reporting.temp_variables_obj)::DATE
     AND customer_id IS NOT NULL
