@@ -935,7 +935,7 @@ SELECT 'campaign-portfolio-objective-cohort-performancem_measurement_date' AS gr
 		, COALESCE  (cte6.cntd_cust, 0)			AS cntd_cust_convert_after_contact 
 		, COALESCE  (cte6.cntd_comm, 0)			AS cntd_comm_convert_after_contact 
 FROM ( SELECT DISTINCT pmd.performance_measurement_date 
-        ,cc.campaign_id 
+        ,cam.campaign_id 
         ,obj.objective_id 
         ,cohort.cohort 
 		,cam.campaign_portfolio 
