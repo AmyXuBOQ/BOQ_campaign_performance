@@ -112,7 +112,7 @@ WITH contact AS (
     ,CH.communication_date
     ,CH.delivery_channel 															AS channel_name
     ,CH.touchpoint
-    ,CASE WHEN UPPER(status) = 'FAILED' THEN NULL ELSE CH.communication_date END 	AS first_exposure_date
+    ,CASE WHEN UPPER(CH.status) = 'SENT' AND CH.control_group = '0' THEN CH.communication_date ELSE NULL END 	AS first_exposure_date
 	,CH.opens 
 	,CH.clicks 
 	,CH.unsubscribes 
@@ -129,6 +129,7 @@ WITH contact AS (
     FROM reporting.temp_ch_delta CH
     LEFT JOIN reporting.ref_campaign_touchpoint_vw ct 
         ON UPPER(TRIM(CH.touchpoint)) = UPPER(TRIM(ct.touchpoint)) 
+		AND UPPER(TRIM(CH.delivery_channel))  = UPPER(TRIM(ct.channel)) 
     LEFT JOIN reporting.ref_campaign_vw REFCAM
       	ON COALESCE(ct.campaign_name,ch.campaign_name) = REFCAM.campaign_name 
 )
@@ -296,7 +297,7 @@ SELECT aa2._updated
             '-'
           )
         ) 		             AS touchpoint
-      ,aa2.exposure_date     AS first_exposure_date 
+      ,CASE WHEN aa.control_group = '0' THEN aa2.exposure_date ELSE NULL END     AS first_exposure_date 
       ,0                     AS opens
       ,0                     AS clicks 
       ,0                     AS unsubscribes  
@@ -347,6 +348,7 @@ SELECT DISTINCT
 FROM CTE_inapp_aa3 aa3
     LEFT JOIN reporting.ref_campaign_touchpoint_vw ct 
         ON UPPER(TRIM(aa3.touchpoint)) = UPPER(TRIM(ct.touchpoint)) 
+		AND UPPER(TRIM(aa3.channel_name)) = UPPER(TRIM(ct.channel))
     LEFT JOIN reporting.ref_campaign_vw REFCAM
       	ON COALESCE(ct.campaign_name,aa3.campaign_name) = REFCAM.campaign_name
 ) 
