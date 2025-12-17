@@ -523,65 +523,71 @@ CREATE TABLE reporting.temp_rpt_agg_5b AS
 WITH CTE1 AS ( 
 SELECT campaign_id  
 		,touchpoint 
+    ,channel_name 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm
 		,COUNT (DISTINCT communication_date) AS cntd_cohort 
 FROM reporting.stg_campaign_objective_interactions
-GROUP BY 1,2
+GROUP BY 1,2,3
 		)
 ,CTE2 AS ( 
 SELECT campaign_id  
 		,touchpoint 
+    ,channel_name 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE first_exposure_date IS NOT NULL 
 	AND customer_group = 'I' 
-GROUP BY 1,2
+GROUP BY 1,2,3
 		)
 ,CTE3 AS ( 
 /* at compaign level (no objective) C VS T -- total */ 
 SELECT campaign_id 
 		,touchpoint 
+    ,channel_name 
 		,customer_group  
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 		,COUNT (DISTINCT communication_date) AS cntd_cohort 
 FROM reporting.stg_campaign_objective_interactions
-GROUP BY 1,2,3 
+GROUP BY 1,2,3,4
 		)
 ,CTE4 AS ( 
 SELECT campaign_id 
 		,objective_id 
 		,touchpoint 
+    ,channel_name 
 		,customer_group  
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
-GROUP BY 1,2,3,4 
+GROUP BY 1,2,3,4,5
 		)
 ,CTE5 AS ( 
 SELECT campaign_id 
 		,objective_id 
 		,touchpoint 
+    ,channel_name 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
-GROUP BY 1,2,3
+GROUP BY 1,2,3,4
 		)
 ,CTE6 AS ( 
 SELECT campaign_id 
 		,objective_id 
 		,touchpoint 
+    ,channel_name 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
 	AND objective_conv_after_contact IS TRUE
 	AND customer_group = 'I' -- contacted would only for intervention 
-GROUP BY 1,2,3
+GROUP BY 1,2,3,4
 		)
 SELECT 'campaign-portfolio-touchpoint-channel-objective' AS grain 
         , master.campaign_id
