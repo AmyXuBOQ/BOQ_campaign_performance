@@ -18,7 +18,9 @@ SELECT campaign_id
 		, agg.cntd_comm_contact		AS communication_contacted_num 
 		, agg.cntd_cust_contact		AS cust_contacted_num 
 FROM reporting.rpt_campaign_objective_interactions  agg 
-WHERE agg.nbr = '4a' AND touchpoint IS NOT NULL 
+WHERE agg.nbr = '4a' 
+	AND touchpoint IS NOT NULL 
+	AND channel IS NOT NULL 
 )
 ,cte_5b AS ( 
 SELECT campaign_id
@@ -32,7 +34,8 @@ SELECT campaign_id
 		, cntd_comm_convert_after_contact 	AS conv_communication_after_contact_num 
 		, cntd_cust_convert_after_contact	AS conv_cust_after_contact_num 
 FROM reporting.rpt_campaign_objective_interactions  agg 
-WHERE agg.nbr = '5b' AND objective_name IS NOT NULL 
+WHERE agg.nbr = '5b' 
+	AND objective_name IS NOT NULL 
 )
 SELECT DISTINCT CURRENT_TIMESTAMP 							AS _updated 
 		, a.campaign_id
@@ -53,9 +56,10 @@ SELECT DISTINCT CURRENT_TIMESTAMP 							AS _updated
 		, COALESCE(b.conv_communication_after_contact_num, 0) AS conv_communication_after_contact_num
 		, COALESCE(b.conv_cust_after_contact_num, 0) AS conv_cust_after_contact_num
 FROM cte_4a a 
-left join cte_5b b 
-on a.campaign_id = b.campaign_id 
-and a.touchpoint = b.touchpoint 
+LEFT JOIN cte_5b b 
+ON a.campaign_id = b.campaign_id 
+AND a.touchpoint = b.touchpoint 
+AND a.channel = b.channel 
 ;
 
 TRUNCATE TABLE reporting.rpt_campaign_drilldown; 
