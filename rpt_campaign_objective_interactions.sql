@@ -20,6 +20,7 @@ SELECT campaign_id , brand
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE first_exposure_date IS NOT NULL 
+	AND customer_group = 'I' 
 GROUP BY 1,2
 		)
 ,CTE3 AS ( 
@@ -43,7 +44,8 @@ WHERE objective_met_date IS NOT NULL
 GROUP BY 1,2,3
 )
 ,CTE5 AS ( 
-SELECT campaign_id , brand 
+SELECT campaign_id 
+    , brand 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
@@ -57,8 +59,8 @@ SELECT campaign_id
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
-	and objective_conv_after_contact IS TRUE
-	and customer_group = 'I' 
+	AND objective_conv_after_contact IS TRUE
+	AND customer_group = 'I' 
 GROUP BY 1,2
 )
 SELECT 'campaign-portfolio' AS grain 
@@ -130,6 +132,7 @@ SELECT campaign_id
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE first_exposure_date IS NOT NULL 
+	AND customer_group = 'I' 
 GROUP BY 1,2
 		)
 ,CTE3 AS ( 
@@ -168,8 +171,8 @@ SELECT campaign_id
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
-	and objective_conv_after_contact IS TRUE
-	and customer_group = 'I' 
+	AND objective_conv_after_contact IS TRUE
+	AND customer_group = 'I' 
 GROUP BY 1,2
 )
 SELECT 'campaign-portfolio-cohort' AS grain 
@@ -240,60 +243,67 @@ CREATE TABLE reporting.temp_rpt_agg_4a AS
 WITH CTE1 AS ( 
 SELECT campaign_id 
 		,touchpoint 
+    ,channel_name
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 		,COUNT (DISTINCT communication_date) AS cntd_cohort 
 FROM reporting.stg_campaign_objective_interactions
-GROUP BY 1,2 
+GROUP BY 1,2,3 
 		)
 ,CTE2 AS ( 
 SELECT campaign_id 
-		,touchpoint 
+		,touchpoint
+    ,channel_name 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE first_exposure_date IS NOT NULL 
-GROUP BY 1,2
+	AND customer_group = 'I' 
+GROUP BY 1,2,3
 		)
 ,CTE3 AS ( 
 SELECT campaign_id 
 		,touchpoint 
+    ,channel_name
 		,customer_group 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 		,COUNT (DISTINCT communication_date) AS cntd_cohort 
 FROM reporting.stg_campaign_objective_interactions
-GROUP BY 1,2,3
+GROUP BY 1,2,3,4
 		)
 ,CTE4 AS ( 
 SELECT campaign_id 
 		,touchpoint 
+    ,channel_name
 		,customer_group 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
-GROUP BY 1,2,3
+GROUP BY 1,2,3,4
 		)
 ,CTE5 AS ( 
 SELECT campaign_id 
 		,touchpoint 
+    ,channel_name
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
-GROUP BY 1,2
+GROUP BY 1,2,3
 		)
 ,CTE6 AS ( 
 SELECT campaign_id  
 		,touchpoint 
+    ,channel_name 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
-	and objective_conv_after_contact IS TRUE
-	and customer_group = 'I' -- contacted would only for intervention 
-GROUP BY 1,2
+	AND objective_conv_after_contact IS TRUE
+	AND customer_group = 'I' -- contacted would only for intervention 
+GROUP BY 1,2,3
 		)
 SELECT 'campaign-portfolio-channel-touchpoint' AS grain 
         , master.campaign_id
@@ -333,31 +343,39 @@ FROM ( 	SELECT DISTINCT  cam.campaign_id
 LEFT JOIN CTE1 
 	ON COALESCE(master.campaign_id,'')    = COALESCE(cte1.campaign_id, '')		
 	AND COALESCE(master.touchpoint, '')     = COALESCE(cte1.touchpoint, '')	
+  AND COALESCE(master.channel, '')     = COALESCE(cte1.channel_name, '')	
 LEFT JOIN CTE2 -- contacted 
 	ON COALESCE(master.campaign_id,'')    = COALESCE(cte2.campaign_id, '')		
 	AND COALESCE(master.touchpoint, '')     = COALESCE(cte2.touchpoint, '')	
+  AND COALESCE(master.channel, '')     = COALESCE(cte2.channel_name, '')	
 LEFT JOIN CTE3 cte3i-- total break C/I
 	ON COALESCE(master.campaign_id,'')    = COALESCE(cte3i.campaign_id, '')		
 	AND COALESCE(master.touchpoint, '')     = COALESCE(cte3i.touchpoint, '')	
+  AND COALESCE(master.channel, '')     = COALESCE(cte3i.channel_name, '')	
 	AND cte3i.customer_group 		= 'I'
 LEFT JOIN CTE3 cte3c -- total break C/I
 	ON COALESCE(master.campaign_id,'')    = COALESCE(cte3c.campaign_id, '')		
 	AND COALESCE(master.touchpoint, '')     = COALESCE(cte3c.touchpoint, '')	
+  AND COALESCE(master.channel, '')     = COALESCE(cte3c.channel_name, '')	
 	AND cte3c.customer_group 		= 'C'	
 LEFT JOIN CTE4 cte4i 
 	ON COALESCE(master.campaign_id,'')    = COALESCE(cte4i.campaign_id, '')		
-	AND COALESCE(master.touchpoint, '')     = COALESCE(cte4i.touchpoint, '')	
+	AND COALESCE(master.touchpoint, '')     = COALESCE(cte4i.touchpoint, '')
+  AND COALESCE(master.channel, '')     = COALESCE(cte4i.channel_name, '')		
 	AND coalesce(cte4i.customer_group, '') 		= 'I'		
 LEFT JOIN CTE4 cte4c 
 	ON COALESCE(master.campaign_id,'')    = COALESCE(cte4c.campaign_id, '')		
 	AND COALESCE(master.touchpoint, '')     = COALESCE(cte4c.touchpoint, '')	
+  AND COALESCE(master.channel, '')     = COALESCE(cte4c.channel_name, '')	
 	AND cte4c.customer_group 		= 'C'	
 LEFT JOIN CTE5 cte5 
 	ON COALESCE(master.campaign_id,'')    = COALESCE(cte5.campaign_id, '')		
 	AND COALESCE(master.touchpoint, '')     = COALESCE(cte5.touchpoint, '')	
+  AND COALESCE(master.channel, '')     = COALESCE(cte5.channel_name, '')	
 LEFT JOIN CTE6 cte6 
 	ON COALESCE(master.campaign_id,'')    = COALESCE(cte6.campaign_id, '')		
 	AND COALESCE(master.touchpoint, '')     = COALESCE(cte6.touchpoint, '')	
+  AND COALESCE(master.channel, '')     = COALESCE(cte6.channel_name, '')	
 ; 	
 
 
@@ -379,6 +397,7 @@ SELECT campaign_id
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE first_exposure_date IS NOT NULL 
+	AND customer_group = 'I' 
 GROUP BY 1,2
 		)
 ,CTE3 AS ( 
@@ -421,8 +440,8 @@ SELECT campaign_id
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
-	and objective_conv_after_contact IS TRUE
-	and customer_group = 'I' -- contacted would only for intervention 
+	AND objective_conv_after_contact IS TRUE
+	AND customer_group = 'I' -- contacted would only for intervention 
 GROUP BY 1,2,3
 		)
 SELECT 'campaign-portfolio-objective-cohort' AS grain 
@@ -504,64 +523,71 @@ CREATE TABLE reporting.temp_rpt_agg_5b AS
 WITH CTE1 AS ( 
 SELECT campaign_id  
 		,touchpoint 
+    ,channel_name 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm
 		,COUNT (DISTINCT communication_date) AS cntd_cohort 
 FROM reporting.stg_campaign_objective_interactions
-GROUP BY 1,2
+GROUP BY 1,2,3
 		)
 ,CTE2 AS ( 
 SELECT campaign_id  
 		,touchpoint 
+    ,channel_name 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE first_exposure_date IS NOT NULL 
-GROUP BY 1,2
+	AND customer_group = 'I' 
+GROUP BY 1,2,3
 		)
 ,CTE3 AS ( 
 /* at compaign level (no objective) C VS T -- total */ 
 SELECT campaign_id 
 		,touchpoint 
+    ,channel_name 
 		,customer_group  
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 		,COUNT (DISTINCT communication_date) AS cntd_cohort 
 FROM reporting.stg_campaign_objective_interactions
-GROUP BY 1,2,3 
+GROUP BY 1,2,3,4
 		)
 ,CTE4 AS ( 
 SELECT campaign_id 
 		,objective_id 
 		,touchpoint 
+    ,channel_name 
 		,customer_group  
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
-GROUP BY 1,2,3,4 
+GROUP BY 1,2,3,4,5
 		)
 ,CTE5 AS ( 
 SELECT campaign_id 
 		,objective_id 
 		,touchpoint 
+    ,channel_name 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
-GROUP BY 1,2,3
+GROUP BY 1,2,3,4
 		)
 ,CTE6 AS ( 
 SELECT campaign_id 
 		,objective_id 
 		,touchpoint 
+    ,channel_name 
 		,COUNT (DISTINCT customer_id) AS cntd_cust
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
-	and objective_conv_after_contact IS TRUE
-	and customer_group = 'I' -- contacted would only for intervention 
-GROUP BY 1,2,3
+	AND objective_conv_after_contact IS TRUE
+	AND customer_group = 'I' -- contacted would only for intervention 
+GROUP BY 1,2,3,4
 		)
 SELECT 'campaign-portfolio-touchpoint-channel-objective' AS grain 
         , master.campaign_id
@@ -613,35 +639,43 @@ FROM ( SELECT DISTINCT cam.campaign_id
 LEFT JOIN CTE1 
 	ON COALESCE(master.campaign_id, '')	    = COALESCE(cte1.campaign_id, '') 	 
 	AND COALESCE(master.touchpoint, '') 	= COALESCE(cte1.touchpoint, '') 	 	
+  AND COALESCE(master.channel, '')     = COALESCE(cte1.channel_name, '')	
 LEFT JOIN CTE2 -- contacted 
 	ON COALESCE(master.campaign_id, '')	    = COALESCE(cte2.campaign_id, '') 	
 	AND COALESCE(master.touchpoint, '') 	= COALESCE(cte2.touchpoint, '') 
+  AND COALESCE(master.channel, '')     = COALESCE(cte2.channel_name, '')	
 LEFT JOIN CTE3 cte3i-- total break C/I
 	ON COALESCE(master.campaign_id, '')	    = COALESCE(cte3i.campaign_id, '') 		 
 	AND COALESCE(master.touchpoint, '') 	= COALESCE(cte3i.touchpoint, '') 	
+  AND COALESCE(master.channel, '')     = COALESCE(cte3i.channel_name, '')	
 	AND cte3i.customer_group 		= 'I'
 LEFT JOIN CTE3 cte3c -- total break C/I
 	ON COALESCE(master.campaign_id, '')	    = COALESCE(cte3c.campaign_id, '') 	
 	AND COALESCE(master.touchpoint, '') 	= COALESCE(cte3c.touchpoint, '') 	
+  AND COALESCE(master.channel, '')     = COALESCE(cte3c.channel_name, '')	
 	AND cte3c.customer_group 		= 'C'	
 LEFT JOIN CTE4 cte4i -- object
 	ON COALESCE(master.campaign_id, '')	    = COALESCE(cte4i.campaign_id, '') 	
 	AND COALESCE(master.objective_id, '') 		= COALESCE(cte4i.objective_id, '') 	 
 	AND COALESCE(master.touchpoint, '') 	= COALESCE(cte4i.touchpoint, '') 	
+  AND COALESCE(master.channel, '')     = COALESCE(cte4i.channel_name, '')	
 	AND cte4i.customer_group 		= 'I'		
 LEFT JOIN CTE4 cte4c -- object
 	ON COALESCE(master.campaign_id, '')	    = COALESCE(cte4c.campaign_id, '') 	
 	AND COALESCE(master.objective_id, '') 		= COALESCE(cte4c.objective_id, '') 	 
 	AND COALESCE(master.touchpoint, '') 	= COALESCE(cte4c.touchpoint, '') 
+  AND COALESCE(master.channel, '')     = COALESCE(cte4c.channel_name, '')	
 	AND cte4c.customer_group 		= 'C'	
 LEFT JOIN CTE5 cte5 -- object
 	ON COALESCE(master.campaign_id, '')	    = COALESCE(cte5.campaign_id, '') 	
 	AND COALESCE(master.objective_id, '') 		= COALESCE(cte5.objective_id, '') 	 
 	AND COALESCE(master.touchpoint, '') 	= COALESCE(cte5.touchpoint, '') 
+  AND COALESCE(master.channel, '')     = COALESCE(cte5.channel_name, '')	
 LEFT JOIN CTE6 cte6 -- object
 	ON COALESCE(master.campaign_id, '')	    = COALESCE(cte6.campaign_id, '') 	
 	AND COALESCE(master.objective_id, '') 		= COALESCE(cte6.objective_id, '') 	 
 	AND COALESCE(master.touchpoint, '') 	= COALESCE(cte6.touchpoint, '') 
+  AND COALESCE(master.channel, '')     = COALESCE(cte6.channel_name, '')	
 ; 	
 
 /* Total - complete and incomplete */ 
@@ -709,6 +743,7 @@ SELECT performance_measurement_date
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.temp_rpt_agg_4dd
 WHERE first_exposure_date IS NOT NULL 
+	AND customer_group = 'I' 
 GROUP BY 1,2
 		)
 ,CTE3 AS ( 
@@ -750,8 +785,8 @@ SELECT performance_measurement_date
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.temp_rpt_agg_4dd
 WHERE objective_met_date IS NOT NULL 
-	and objective_conv_after_contact IS TRUE
-	and customer_group = 'I' 
+	AND objective_conv_after_contact IS TRUE
+	AND customer_group = 'I' 
 GROUP BY 1,2,3
 		)
 SELECT 'campaign-portfolio-objective-performance_measurement_date' AS grain 
@@ -857,6 +892,7 @@ SELECT performance_measurement_date
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.temp_rpt_agg_5cc
 WHERE first_exposure_date IS NOT NULL 
+	AND customer_group = 'I' 
 GROUP BY 1,2,3
 		)
 ,CTE3 AS ( 
@@ -902,8 +938,8 @@ SELECT performance_measurement_date
 		,COUNT (DISTINCT communication_id) AS cntd_comm 
 FROM reporting.temp_rpt_agg_5cc
 WHERE objective_met_date IS NOT NULL 
-	and objective_conv_after_contact IS TRUE
-	and customer_group = 'I' 
+	AND objective_conv_after_contact IS TRUE
+	AND customer_group = 'I' 
 GROUP BY 1,2,3,4
 		)
 SELECT 'campaign-portfolio-objective-cohort-performancem_measurement_date' AS grain 
