@@ -303,7 +303,7 @@ FROM reporting.stg_campaign_objective_interactions
 WHERE objective_met_date IS NOT NULL 
 	AND objective_conv_after_contact IS TRUE
 	AND customer_group = 'I' -- contacted would only for intervention 
-GROUP BY 1,2
+GROUP BY 1,2,3
 		)
 SELECT 'campaign-portfolio-channel-touchpoint' AS grain 
         , master.campaign_id
