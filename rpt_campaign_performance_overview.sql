@@ -1,8 +1,3 @@
-
-/*************************************************************/ 
-/******** reporting.rpt_campaign_performance_overview *******/ 
-/***********************************************************/
-
 DROP TABLE IF EXISTS reporting.temp_rpt_campaign_performance_overview; 
 CREATE TABLE reporting.temp_rpt_campaign_performance_overview AS 
 WITH CTE0 AS (
@@ -93,7 +88,7 @@ SELECT DISTINCT
 		,cte.incremental_uplift 					
 		,cte.incremental_uplift_num 				
 		,cte.annualised_uplift_num 					
-		,ROUND (cte.test_stats::NUMERIC, 3) 															AS test_stats			
+		,ROUND(cte.test_stats::NUMERIC,3) AS test_stats			
 		,0::NUMERIC 																				 	AS mean 
 		,1::NUMERIC																						AS standard_dev 					
 FROM CTE2 cam 
