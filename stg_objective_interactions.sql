@@ -91,6 +91,7 @@ SELECT
     ,CASE -- temp
         WHEN (string_to_array(crt._filename, '_'))[4] = 'FirstUsedApp' THEN 'OBJ5'
         WHEN (string_to_array(crt._filename, '_'))[4] LIKE '%HomeLoanEnquiry%' THEN 'OBJ6'
+        WHEN (string_to_array(crt._filename, '_'))[4] = 'DigitalWallet' THEN 'OBJ8'
         ELSE NULL
         END::VARCHAR                                                        AS objective_id
     ,(string_to_array(crt._filename, '_'))[3]                               AS brand 
@@ -99,7 +100,8 @@ SELECT
 ,CTE_obj_aa2 AS ( 
 SELECT 
     crt1._updated
-    ,COALESCE(mobile1.customer_id, mobile2.customer_id, email.customer_id, cif.customer_id)   AS customer_id 
+    ,COALESCE(mobile1.customer_id, mobile2.customer_id, email.customer_id, cif.customer_id)     AS customer_id
+    ,COALESCE(mobile1.hashed_cif, mobile2.hashed_cif, email.hashed_cif, cif.hashed_cif)         AS hashed_cif 
     ,crt1.objective_met_date
     ,crt1.objective_id
     ,crt1.brand 
@@ -126,6 +128,7 @@ SELECT
 SELECT _updated 
         ,'AA'               AS source 
         ,customer_id 
+        ,hashed_cif
         ,objective_met_date 
         ,objective_id 
         ,brand 
@@ -144,6 +147,7 @@ CREATE TABLE IF NOT EXISTS reporting.temp_acs_objectives AS
     ,'ACS'                      AS source 
     ,'OBJ7'::VARCHAR            AS objective_id 
     ,customer_id 
+    ,hashed_cif 
     ,_updated                   AS objective_met_date 
   FROM reporting.stg_campaign_interactions
   WHERE _updated::DATE > (SELECT last_run_max FROM reporting.temp_variables_obj WHERE table_name = 'ACS')::DATE
@@ -157,6 +161,7 @@ SELECT
     _updated
     ,source 
     ,customer_id::VARCHAR
+    ,hashed_cif::VARCHAR
     ,objective_met_date::TIMESTAMP 
     ,objective_id::VARCHAR
     ,brand::VARCHAR 
@@ -169,6 +174,7 @@ _updated
 ,source
 ,objective_id 
 ,customer_id 
+,hashed_cif 
 ,objective_met_date 
 )
   SELECT
@@ -176,6 +182,7 @@ _updated
     ,source
     ,objective_id 
     ,customer_id 
+    ,hashed_cif
     ,objective_met_date  
 FROM reporting.temp_acs_objectives
 WHERE objective_id IS NOT NULL
@@ -187,7 +194,7 @@ CREATE TABLE IF NOT EXISTS reporting.temp_t24_objectives AS
   SELECT
     _updated
     ,TRIM(REPLACE(objective_id, ' ', ''))::VARCHAR  AS objective_id  
-    ,customer_id
+    ,customer_id AS hashed_cif 
     ,CASE
 	  WHEN objective_met_date::text ~ '[A-Za-z]' THEN NULL
 	  ELSE objective_met_date::TIMESTAMP
@@ -204,14 +211,14 @@ INSERT INTO reporting.temp_objectives (
 _updated 
 ,source
 ,objective_id 
-,customer_id 
+,hashed_cif
 ,objective_met_date 
 )
   SELECT
     _updated
     ,'T24'          AS source
     ,objective_id 
-    ,customer_id 
+    ,hashed_cif
     ,objective_met_date  
 FROM reporting.temp_t24_objectives
 ; 
@@ -232,6 +239,7 @@ SELECT
     SCAMPI.communication_id
   ) AS pk
   ,SCAMPI.customer_id
+  ,SCAMPI.hashed_cif
   ,SCAMPI.campaign_name
   ,SCAMPI.campaign_portfolio
   ,SCAMPI.control_group 
@@ -247,7 +255,7 @@ SELECT
   ,ROW_NUMBER() OVER (PARTITION BY SCAMPI.customer_id, SCAMPI.campaign_name, SCAMPI.touchpoint, AO.objective_id, AO.objective_met_date ORDER BY AO._updated DESC,SCAMPI._updated DESC) AS RNK 
 FROM reporting.temp_objectives AO
 INNER JOIN reporting.stg_campaign_interactions SCAMPI
-  ON AO.customer_id = SCAMPI.customer_id
+  ON AO.hashed_cif = SCAMPI.hashed_cif
 LEFT JOIN reporting.ref_objective_vw ROBJ
   ON ROBJ.objective_id = AO.objective_id
 LEFT JOIN reporting.ref_campaign_vw RCAMP
@@ -263,7 +271,8 @@ SELECT * FROM CTE_ao WHERE rnk = 1
 
 INSERT INTO reporting.stg_objective_interactions (
   _updated                       
-  ,customer_id                   
+  ,customer_id   
+  ,hashed_cif                
   ,campaign_name                 
   ,campaign_portfolio            
   ,control_group                 
@@ -280,7 +289,8 @@ INSERT INTO reporting.stg_objective_interactions (
 )
 SELECT   
     _updated                          
-  ,customer_id                   
+  ,customer_id    
+  ,hashed_cif               
   ,campaign_name                 
   ,campaign_portfolio            
   ,control_group                 
@@ -341,4 +351,3 @@ DROP TABLE IF EXISTS reporting.temp_acs_objectives;
 DROP TABLE IF EXISTS reporting.temp_t24_objectives;
 DROP TABLE IF EXISTS reporting.temp_objectives;
 DROP TABLE IF EXISTS reporting.temp_objective_interactions;
-
